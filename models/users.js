@@ -32,6 +32,11 @@ async function createUser(username, password) {
   return result;
 }
 
+async function deleteUser(username) {
+  const result = await db.run("DELETE FROM Users WHERE username=" + `'${username}'`);
+  return result;
+}
+
 module.exports = {
-  findAll, findOne, createUser, findUser
+  findAll, findOne, createUser, findUser, deleteUser
 };

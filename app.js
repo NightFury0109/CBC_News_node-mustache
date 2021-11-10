@@ -1,7 +1,12 @@
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const app = express();
 const session = require('express-session');
 const mustacheExpress = require('mustache-express');
+
+const User = require('./models/users');
+const isEmpty = require('./utils/is-empty');
 
 // Include the mustache engine to help us render our pages
 app.engine("mustache", mustacheExpress());
@@ -29,6 +34,18 @@ app.use(function (req, res, next) {
         req.TPL.displaylogin = !req.session.username;
         req.TPL.displaylogout = req.session.username;
 
+        // Log request in log.txt
+        let reqTxt = new Date().toString() + ',' + req.path.toString() + ',' + req.ip + ',' + JSON.stringify(req.query) + ',' + JSON.stringify(req.body) + '/n';
+        let existStr = fs.readFileSync('./log.txt');
+        existStr = existStr + reqTxt;
+        fs.writeFileSync('log.txt', existStr, (err) => {
+                // throws an error, you could also catch it here
+                if (err) throw err;
+
+                // success case, the file was saved
+                console.log('req saved!');
+        });
+
         next();
 });
 
@@ -48,7 +65,18 @@ app.use("/members", function (req, res, next) {
 
 });
 app.use("/members", function (req, res, next) { req.TPL.membersnav = true; next(); });
-app.use("/editors", function (req, res, next) { req.TPL.editorsnav = true; next(); });
+app.use("/editors", async function (req, res, next) {
+        if (isEmpty(req.session.username)) {
+                res.redirect('/home');
+        } else {
+                const user = await User.findUser(req.session.username);
+                if (user.level === 'editor') {
+                        next();
+                } else {
+                        res.redirect('/home');
+                }
+        }
+});
 app.use("/editors", function (req, res, next) { req.TPL.editorsnav = true; next(); });
 app.use("/login", function (req, res, next) { req.TPL.loginnav = true; next(); });
 app.use("/register", function (req, res, next) { req.TPL.registernav = true; next(); });

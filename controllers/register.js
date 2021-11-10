@@ -30,7 +30,7 @@ router.post("/attemptRegister", async function (req, res) {
   }
 
   try {
-    const user = await User.findOne(username, password);
+    const user = await User.findUser(username);
 
     if (!isEmpty(user)) {
       req.session.register_error = "User already exists";
