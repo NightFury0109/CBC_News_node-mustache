@@ -10,24 +10,26 @@ app.set('views', __dirname + '/views');
 
 // We use the .urlencoded middleware to process form data in the request body,
 // which is something that occurs when we have a POST request.
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 
 // Use the session middleware
-app.use(session({secret: 'keyboard cat'
-                ,resave: false
-                ,saveUninitialized:false}))
+app.use(session({
+        secret: 'keyboard cat'
+        , resave: false
+        , saveUninitialized: false
+}))
 
 // Create a middleware to populate an initial template array
-app.use(function(req,res,next) {
+app.use(function (req, res, next) {
 
-  // reset the template obect to a blank object on each request
-  req.TPL = {};
+        // reset the template obect to a blank object on each request
+        req.TPL = {};
 
-  // decide whether to display the login or logout button in the navbar
-  req.TPL.displaylogin = !req.session.username;
-  req.TPL.displaylogout = req.session.username;
+        // decide whether to display the login or logout button in the navbar
+        req.TPL.displaylogin = !req.session.username;
+        req.TPL.displaylogout = req.session.username;
 
-  next();
+        next();
 });
 
 // Create middlewares for setting up navigational highlighting
@@ -36,24 +38,23 @@ app.use(function(req,res,next) {
 // would come at the cost of readability (which matters more right now since
 // we are learning middlewares for the first time).
 app.use("/home",
-        function(req,res,next) { req.TPL.homenav = true; next(); });
+        function (req, res, next) { req.TPL.homenav = true; next(); });
 app.use("/articles",
-        function(req,res,next) { req.TPL.articlesnav = true; next(); });
-app.use("/members",
-        function(req,res,next) { req.TPL.membersnav = true; next(); });
-app.use("/editors",
-        function(req,res,next) { req.TPL.editorsnav = true; next(); });
-app.use("/login",
-        function(req,res,next) { req.TPL.loginnav = true; next(); });
+        function (req, res, next) { req.TPL.articlesnav = true; next(); });
+app.use("/members", function (req, res, next) {
+
+        if (req.session.username) next();
+        else res.redirect("/home");
+
+});
+app.use("/members", function (req, res, next) { req.TPL.membersnav = true; next(); });
+app.use("/editors", function (req, res, next) { req.TPL.editorsnav = true; next(); });
+app.use("/editors", function (req, res, next) { req.TPL.editorsnav = true; next(); });
+app.use("/login", function (req, res, next) { req.TPL.loginnav = true; next(); });
+app.use("/register", function (req, res, next) { req.TPL.registernav = true; next(); });
 
 // protect access to the members page, re-direct user to home page if nobody
 // is logged in...
-app.use("/members", function(req,res,next) {
-
-  if (req.session.username) next();
-  else res.redirect("/home");
-
-});
 
 // Include Controllers
 //
@@ -88,16 +89,17 @@ app.use("/articles", require("./controllers/articles"));
 app.use("/members", require("./controllers/members"));
 app.use("/editors", require("./controllers/editors"));
 app.use("/login", require("./controllers/login"));
+app.use("/register", require("./controllers/register"));
 
 // - We route / to redirect to /home by default
-app.get("/", function(req, res) {
-  res.redirect("/home");
+app.get("/", function (req, res) {
+        res.redirect("/home");
 });
 
 // Catch-all router case
-app.get(/^(.+)$/, function(req,res) {
-  res.sendFile(__dirname + req.params[0]);
+app.get(/^(.+)$/, function (req, res) {
+        res.sendFile(__dirname + req.params[0]);
 });
 
 // Start the server
-var server = app.listen(3000, function() {console.log("Server listening...");})
+var server = app.listen(3000, function () { console.log("Server listening..."); })
